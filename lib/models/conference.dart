@@ -1,12 +1,16 @@
+import 'dart:convert';
+
+import 'package:app/constants.dart';
+import 'package:http/http.dart' as http;
+
 class Conference {
   final int id;
 
   final String title;
-  final String info;
   final String password;
 
-  final int startTs;
-  final int endTs;
+  final String startTs;
+  final String endTs;
 
   final double topLeftLat;
   final double topLeftLon;
@@ -18,7 +22,6 @@ class Conference {
   const Conference(
       this.id,
       this.title,
-      this.info,
       this.password,
       this.startTs,
       this.endTs,
@@ -31,50 +34,43 @@ class Conference {
   Conference.fromJson(Map<String, dynamic> json)
       : id = json["id"],
         title = json["title"],
-        info = json["info"],
         password = json["password"],
         startTs = json["start_ts"],
-        endTs = json["endTs"],
+        endTs = json["end_ts"],
         topLeftLat = json["top_left_lat"],
         topLeftLon = json["top_left_lon"],
         widthInTiles = json["width_in_tiles"],
         heightInTiles = json["height_in_tiles"],
-        admins = json["admins"];
+        admins = json["admins"].cast<int>();
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'info': info,
-    'password': password,
-    'start_ts': startTs,
-    'end_ts': endTs,
-    'top_left_lat': topLeftLat,
-    'top_left_lon': topLeftLon,
-    'width_in_tiles': widthInTiles,
-    'height_in_tiles': heightInTiles,
-    'admins': admins,
-  };
+        'id': id,
+        'title': title,
+        'password': password,
+        'start_ts': startTs,
+        'end_ts': endTs,
+        'top_left_lat': topLeftLat,
+        'top_left_lon': topLeftLon,
+        'width_in_tiles': widthInTiles,
+        'height_in_tiles': heightInTiles,
+        'admins': admins,
+      };
 
-  static Future<Conference?> fetch(int id, String password) async {
-    var conf = switch (id) {
-      1 => const Conference(1, "RPIC 2024", "RPIC in 2024", "youalreadyknowthistho", 0, 50000, 80, 80, 10, 10, [1]),
-      2 => const Conference(2, "Covfamikoi 2025", "Covfamikoi in 2025", "supersecretpassword", 0, 50000, 80, 80, 10, 10, [1]),
-      _ => null,
-    };
-    if (conf == null) {
-      return null;
+  static Future<Conference> fetch(int id, String password) async {
+    var ret = await http.get(buildUrl("api/conferences"), headers: {
+      "conference-id": id.toString(),
+      "conference-password": password
+    });
+
+    if (ret.statusCode != 200) {
+      throw ret.statusCode;
     }
-    if (password != conf.password) {
-      throw 401;
-    }
-    return conf;
+
+    var data = jsonDecode(ret.body);
+    return Conference.fromJson(data);
   }
 
   static Conference? cached(int id) {
-    // todo: cache
-    return switch (id) {
-      1 => const Conference(2, "RPIC 2024", "RPIC in 2024", "youalreadyknowthistho", 0, 50000, 80, 80, 10, 10, [1]),
-      _ => null,
-    };
+    return null;
   }
 }

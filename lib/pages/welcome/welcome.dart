@@ -1,6 +1,8 @@
+import 'package:app/components/admin_account.dart';
+import 'package:app/errors.dart';
 import 'package:app/models/conference.dart';
 import 'package:app/models/conference_public.dart';
-import 'package:app/roots/conference/conference.dart';
+import 'package:app/pages/conference/conference.dart';
 import 'package:flutter/material.dart';
 
 class WelcomeView extends StatefulWidget {
@@ -14,8 +16,8 @@ class _WelcomeViewState extends State<WelcomeView> {
   List<PublicConference>? conferences;
   String? password;
 
-  void fetchData() async {
-    var data = await PublicConference.get();
+  Future<void> fetchData() async {
+    var data = await PublicConference.get().catchError((err) => throw processError(context, err));
     setState(() {
       conferences = data;
     });
@@ -28,14 +30,38 @@ class _WelcomeViewState extends State<WelcomeView> {
       return cached;
     }
 
+    password = null;
+
     return showDialog(
         context: context,
         builder: (context) {
           bool invalidPassword = false;
+
+          void onSubmit(
+              BuildContext context, void Function(Function()) setState) {
+            if (password != null) {
+              Conference.fetch(conf.id, password!).then((conf) {
+                if (context.mounted) {
+                  Navigator.pop(context, conf);
+                }
+              }).catchError((err) {
+                if (context.mounted) {
+                  processError(context, err, allowPop: true);
+                  if ([401, 403].contains(err)) {
+                    setState(() => invalidPassword = true);
+                  }
+                }
+              });
+            }
+          }
+
           return StatefulBuilder(
               builder: (context, setState) => AlertDialog(
                       title: Text(conf.title),
                       content: TextField(
+                          autofocus: true,
+                          autocorrect: false,
+                          onSubmitted: (_) => onSubmit(context, setState),
                           decoration: InputDecoration(
                               hintText: "Event password",
                               errorText: invalidPassword
@@ -47,22 +73,7 @@ class _WelcomeViewState extends State<WelcomeView> {
                           }),
                       actions: [
                         ElevatedButton(
-                            onPressed: () {
-                              if (password != null) {
-                                Conference.fetch(conf.id, password!)
-                                    .then((conf) {
-                                  if (context.mounted) {
-                                    Navigator.pop(context, conf);
-                                  }
-                                }).catchError((err) {
-                                  if (context.mounted && err == 401) {
-                                    setState(() => invalidPassword = true);
-                                  } else {
-                                    throw err;
-                                  }
-                                });
-                              }
-                            },
+                            onPressed: () => onSubmit(context, setState),
                             child: const Text("Submit"))
                       ]));
         });
@@ -70,12 +81,14 @@ class _WelcomeViewState extends State<WelcomeView> {
 
   @override
   build(context) {
-    Widget body;
+    List<ListTile> children;
     if (conferences == null) {
       fetchData();
-      body = const Text("Loading...");
+      children = const [ListTile(title: Center(child: Text("Loading...")), enabled: false)];
+    } else if (conferences!.isEmpty) {
+      children = const [ListTile(title: Center(child: Text("No conferences.")), enabled: false)];
     } else {
-      body = ListView(children: [
+      children = [
         for (var conf in conferences!)
           ListTile(
             onTap: () {
@@ -90,10 +103,17 @@ class _WelcomeViewState extends State<WelcomeView> {
               });
             },
             title: Text(conf.title),
+            trailing: const Icon(Icons.keyboard_arrow_right),
           )
-      ]);
+      ];
     }
 
-    return Scaffold(body: Center(child: body));
+    return Scaffold(
+        appBar: AppBar(
+            title: const Text("RP Events"),
+            centerTitle: false,
+            actions: const [AdminAccountButton()]),
+        body: RefreshIndicator(
+            onRefresh: fetchData, child: ListView(children: children)));
   }
 }

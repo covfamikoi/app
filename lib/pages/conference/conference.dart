@@ -1,8 +1,9 @@
+import 'package:app/components/admin_account.dart';
 import 'package:app/models/conference.dart';
-import 'package:app/roots/conference/calendar.dart';
-import 'package:app/roots/conference/home.dart';
-import 'package:app/roots/conference/map.dart';
-import 'package:app/roots/conference/settings.dart';
+import 'package:app/pages/conference/calendar.dart';
+import 'package:app/pages/conference/home.dart';
+import 'package:app/pages/conference/map.dart';
+import 'package:app/pages/conference/settings.dart';
 import 'package:flutter/material.dart';
 
 class ConferenceView extends StatefulWidget {
@@ -20,7 +21,7 @@ class _ConferenceViewState extends State<ConferenceView> {
   @override
   build(context) {
     return Scaffold(
-        appBar: AppBar(title: Text(widget.conference.title)),
+        appBar: AppBar(title: Text(widget.conference.title), centerTitle: false, actions: const [AdminAccountButton()]),
         body: switch (pageIndex) {
               0 => HomeView(conference: widget.conference),
               1 => CalendarView(conference: widget.conference),
@@ -45,7 +46,7 @@ class _ConferenceViewState extends State<ConferenceView> {
             BottomNavigationBarItem(
                 icon: const Icon(Icons.settings),
                 label: "Settings",
-                backgroundColor: Colors.grey.shade600),
+                backgroundColor: Colors.blueGrey.shade600),
           ],
           onTap: (idx) => setState(() {
             pageIndex = idx;

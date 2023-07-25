@@ -1,3 +1,8 @@
+import 'dart:convert';
+
+import 'package:app/constants.dart';
+import 'package:http/http.dart' as http;
+
 class PublicConference {
   final int id;
   final String title;
@@ -14,10 +19,9 @@ class PublicConference {
       };
 
   static Future<List<PublicConference>> fetch() async {
-    return const [
-      PublicConference(1, "RPIC 2024"),
-      PublicConference(2, "Covfamikoi 2025"),
-    ];
+    var ret = await http.read(buildUrl("api/conferences/list/public"));
+    var data = jsonDecode(ret);
+    return [for (var item in data) PublicConference(item[0], item[1])];
   }
 
   static Future<List<PublicConference>> get() {

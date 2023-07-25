@@ -1,4 +1,4 @@
-import 'package:app/roots/welcome/welcome.dart';
+import 'package:app/pages/welcome/welcome.dart';
 import 'package:flutter/material.dart';
 
 main() {
@@ -15,14 +15,16 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   @override
   build(context) {
+    var seedColor = const Color.fromARGB(255, 148, 35, 42);
     var lightScheme = ColorScheme.fromSeed(
-        seedColor: Colors.cyanAccent.shade100, brightness: Brightness.light);
-    var darkScheme = ColorScheme.fromSeed(
-        seedColor: Colors.cyanAccent.shade100, brightness: Brightness.dark);
+        seedColor: seedColor, brightness: Brightness.light);
+    var darkScheme =
+        ColorScheme.fromSeed(seedColor: seedColor, brightness: Brightness.dark);
     var theme = ThemeData(colorScheme: lightScheme, useMaterial3: true);
     var darkTheme = ThemeData(colorScheme: darkScheme, useMaterial3: true);
 
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Covfamikoi App',
       theme: theme,
       darkTheme: darkTheme,
